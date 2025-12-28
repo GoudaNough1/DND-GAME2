@@ -1,5 +1,6 @@
 import React from 'react';
 import { Player } from '../types';
+import { PixelAvatar } from './PixelAvatar';
 
 interface SidebarProps {
   player: Player;
@@ -15,16 +16,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ player }) => {
       {/* Header */}
       <div>
         <h1 className="text-xl font-bold text-amber-500 mb-1">MINES OF KORTH</h1>
-        <div className="text-xs text-slate-500 uppercase tracking-widest">v1.0.0</div>
+        <div className="text-xs text-slate-500 uppercase tracking-widest">v1.1.0</div>
       </div>
 
       {/* Character Card */}
-      <div className="bg-slate-900 p-3 rounded border border-slate-800">
-        <h2 className="text-lg font-bold text-white mb-2">{player.name || 'Unknown'}</h2>
-        <div className="text-sm text-amber-300 mb-2">Lvl {player.level} {player.className}</div>
+      <div className="bg-slate-900 p-3 rounded border border-slate-800 flex flex-col items-center">
+        {player.visuals && <PixelAvatar visuals={player.visuals} size={80} />}
+        
+        <h2 className="text-lg font-bold text-white mt-2">{player.name}</h2>
+        <div className="text-xs text-slate-400 uppercase tracking-wider mb-2">
+             {player.race} {player.className}
+        </div>
+        <div className="w-full flex justify-between text-[10px] text-slate-500 px-2 mb-2">
+            <span>{player.background}</span>
+            <span>{player.personality}</span>
+        </div>
         
         {/* HP Bar */}
-        <div className="mb-1 flex justify-between text-xs">
+        <div className="w-full mb-1 flex justify-between text-xs">
             <span>HP</span>
             <span>{player.stats.currentHp} / {player.stats.maxHp}</span>
         </div>
@@ -66,7 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ player }) => {
                         {item.name}
                     </span>
                     {item.type === 'CONSUMABLE' && (
-                         <span className="text-[10px] bg-slate-800 px-1 rounded text-slate-400">Use in Combat</span>
+                         <span className="text-[10px] bg-slate-800 px-1 rounded text-slate-400">Use</span>
                     )}
                 </li>
             ))}

@@ -1,4 +1,4 @@
-import { StoryNode, Enemy, Item, Stats, Skill } from './types';
+import { StoryNode, Enemy, Item, Stats, Skill, Race, Background, Personality } from './types';
 
 // --- Items ---
 export const ITEMS: Record<string, Item> = {
@@ -7,7 +7,9 @@ export const ITEMS: Record<string, Item> = {
   STAFF: { id: 'staff', name: 'Gnarlwood Staff', type: 'WEAPON', effectValue: 6, description: 'It hums with a low, headache-inducing vibration.' },
   POTION: { id: 'potion', name: 'Crimson Vial', type: 'CONSUMABLE', effectValue: 15, description: 'Thick, metallic-tasting lifeblood.' },
   AMULET: { id: 'amulet', name: 'Bone Totem', type: 'KEY', description: 'A finger bone tied with gut string.' },
-  MAP: { id: 'map', name: 'Skin Map', type: 'KEY', description: 'Tattooed leather showing the descent to the Sunken Crypts.' }
+  MAP: { id: 'map', name: 'Skin Map', type: 'KEY', description: 'Tattooed leather showing the descent to the Sunken Crypts.' },
+  SIGNET: { id: 'signet', name: 'Stolen Signet', type: 'KEY', description: 'A noble ring you swiped years ago.' },
+  RATIONS: { id: 'rations', name: 'Hardtack', type: 'CONSUMABLE', effectValue: 5, description: 'Dry bread.' }
 };
 
 // --- Skills ---
@@ -23,20 +25,74 @@ export const SKILLS: Record<string, Skill> = {
   }
 };
 
-// --- Starting Stats Presets ---
+// --- Character Creation Data ---
+export const RACES: Record<Race, { stats: Partial<Stats>, abilities: string[], description: string }> = {
+    Human: { 
+        stats: { str: 1, dex: 1, int: 1, maxHp: 0, ac: 0 },
+        abilities: ['Versatile'],
+        description: "Adaptable and ambitious. +1 to all main stats." 
+    }, 
+    Elf: { 
+        stats: { str: 0, dex: 2, int: 1, maxHp: -2, ac: 1 },
+        abilities: ['Darkvision'],
+        description: "Keen eyes in the dark. High Dexterity but fragile."
+    }, 
+    Dwarf: { 
+        stats: { str: 2, dex: -1, int: 0, maxHp: 5, ac: 0 },
+        abilities: ['Stonecunning'],
+        description: "Masters of stone. Bonus HP and structure knowledge."
+    }, 
+    Orc: { 
+        stats: { str: 3, dex: 0, int: -2, maxHp: 3, ac: 0 },
+        abilities: ['Savage Attacks'],
+        description: "Brutal warriors. High Strength and melee damage."
+    } 
+};
+
+export const BACKGROUNDS: Record<Background, { stats: Partial<Stats>, items: Item[], description: string }> = {
+    Urchin: {
+        stats: { dex: 1, maxHp: -2 },
+        items: [ITEMS.DAGGER],
+        description: "You grew up eating scraps and dodging guards."
+    },
+    Noble: {
+        stats: { int: 2, str: -1 },
+        items: [ITEMS.SIGNET, ITEMS.POTION],
+        description: "You were born to silk sheets, but fell from grace."
+    },
+    Soldier: {
+        stats: { str: 1, ac: 1 },
+        items: [ITEMS.RATIONS],
+        description: "You served in the border wars before mercenary life."
+    },
+    Scholar: {
+        stats: { int: 3, str: -2 },
+        items: [ITEMS.POTION],
+        description: "You studied the arcane arts in the capital."
+    }
+};
+
+export const PERSONALITIES: Record<Personality, string> = {
+    Stoic: "You show no emotion. Pain is just information.",
+    Aggressive: "You hit first, ask questions never.",
+    Charming: "You talk your way out of trouble... usually.",
+    Paranoid: "Trust no one. Check every corner."
+};
+
+// --- Starting Stats Presets (Base Class Stats before modifiers) ---
 export const CLASS_PRESETS: Record<string, { stats: Stats; items: Item[]; skills: Skill[] }> = {
   Warrior: {
-    stats: { str: 16, dex: 12, int: 8, maxHp: 35, currentHp: 35, ac: 15 },
+    stats: { str: 14, dex: 12, int: 8, maxHp: 30, currentHp: 30, ac: 14 },
     items: [ITEMS.SWORD, ITEMS.POTION],
     skills: [SKILLS.HEROIC_STRIKE]
   },
   Rogue: {
-    stats: { str: 10, dex: 16, int: 12, maxHp: 28, currentHp: 28, ac: 14 },
+    stats: { str: 10, dex: 14, int: 12, maxHp: 24, currentHp: 24, ac: 13 },
     items: [ITEMS.DAGGER, ITEMS.POTION],
     skills: [SKILLS.SHADOW_SHIV]
   },
   Mage: {
-    stats: { str: 8, dex: 12, int: 16, maxHp: 24, currentHp: 24, ac: 12 },
+    stats: { str: 8, dex: 12, int: 14, maxHp: 20, currentHp: 20, ac: 11 },
     items: [ITEMS.STAFF, ITEMS.POTION, ITEMS.POTION],
     skills: [SKILLS.FIREBALL]
   }
@@ -54,24 +110,22 @@ export const ENEMIES: Record<string, Enemy> = {
 
 // --- The Mines of Korth Campaign (Redux) ---
 export const STORY_NODES: Record<string, StoryNode> = {
-  // Character Creation / Intro
   START: {
     id: 'START',
-    text: "Three days ago, Silas left you for dead in the gutters of the capital, stealing the location of the Sunken Crypts from your pocket.\n\nHe seeks the artifact hidden below. You seek him.\n\nYou stand before the Mines of Korth. The rain washes the blood from your bandages. It's time to choose how you will exact your revenge.",
+    text: "The wind howls outside the Mines of Korth. The rain washes the blood from your bandages.\n\nSilas left you for dead. He took your gold, your dignity, and the map to the crypts.\n\nNow, you stand at the entrance. It's time for revenge.",
     choices: [
-      { text: "I am a Warrior. I will break him like a twig.", nextId: 'ENTRANCE', action: 'ADD_ITEM', actionValue: 'Warrior' },
-      { text: "I am a Rogue. I will return the favor, knife first.", nextId: 'ENTRANCE', action: 'ADD_ITEM', actionValue: 'Rogue' },
-      { text: "I am a Mage. He will burn for his treachery.", nextId: 'ENTRANCE', action: 'ADD_ITEM', actionValue: 'Mage' }
+       { text: "Enter the Mines.", nextId: 'ENTRANCE' }
     ]
   },
   ENTRANCE: {
     id: 'ENTRANCE',
-    text: "The mine entrance is barred by a heavy iron door. You see scratches around the keyhole—Silas was here. He picked the lock, entered, and then jammed the mechanism to slow you down. Typical.\n\nA narrow, muddy ventilation tunnel winds off to the left. It smells of wet fur.",
+    text: "The mine entrance is barred by a heavy iron door. You see scratches around the keyhole—Silas was here. He picked the lock, entered, and then jammed the mechanism to slow you down.\n\nA narrow, muddy ventilation tunnel winds off to the left.",
     choices: [
       { text: "Take the mud tunnel. Avoid the door entirely.", nextId: 'AMBUSH' },
-      { text: "Kick the door down. Subtlety is dead. (Str 12+)", nextId: 'DOOR_SMASHED', reqStat: 'str', reqValue: 12 },
-      { text: "Read the warning runes etched on the iron. (Int 12+)", nextId: 'DOOR_READ', reqStat: 'int', reqValue: 12 },
-      { text: "Fix the jammed lock. You're better than him. (Dex 12+)", nextId: 'DOOR_PICKED', reqStat: 'dex', reqValue: 12 }
+      { text: "Kick the door down. (Str 12+)", nextId: 'DOOR_SMASHED', reqStat: 'str', reqValue: 12 },
+      { text: "Examine the stonework (Stonecunning)", nextId: 'DWARF_ENTRY', reqAbility: 'Stonecunning' },
+      { text: "Read the warning runes. (Int 12+)", nextId: 'DOOR_READ', reqStat: 'int', reqValue: 12 },
+      { text: "Fix the jammed lock. (Dex 12+)", nextId: 'DOOR_PICKED', reqStat: 'dex', reqValue: 12 }
     ]
   },
   
@@ -81,6 +135,13 @@ export const STORY_NODES: Record<string, StoryNode> = {
     text: "CRASH! You channel your anger into a single kick. The rusted hinges scream and give way, the heavy door slamming into the stone floor. \n\nThe noise echoes deep into the mine. If anything was sleeping, it's awake now. But you feel powerful.",
     choices: [
       { text: "Step over the wreckage into the Armory.", nextId: 'OLD_ARMORY' }
+    ]
+  },
+  DWARF_ENTRY: {
+    id: 'DWARF_ENTRY',
+    text: "You run your fingers along the doorframe. The mortar is crumbling near the bottom hinge. Typical goblin construction.\n\nA single, well-placed kick to the keystone causes the frame to buckle. The heavy door swings open with a groan, but doesn't crash. You slip inside quietly.",
+    choices: [
+      { text: "Enter the Armory.", nextId: 'OLD_ARMORY' }
     ]
   },
   DOOR_READ: {
@@ -101,15 +162,23 @@ export const STORY_NODES: Record<string, StoryNode> = {
   // Path A: The Mud Tunnel (Ambush)
   AMBUSH: {
     id: 'AMBUSH',
-    text: "You squeeze through the tight tunnel. It's darker here. You realize too late why Silas avoided this route.\n\nA pair of yellow eyes blink in the darkness above you. A Tunnel Skulker hisses, \"Fresh meat!\"",
+    text: "You squeeze through the tight tunnel. It's darker here. You realize too late why Silas avoided this route.\n\nThe silence is heavy. You feel eyes watching you from the ceiling.",
     enemyId: 'GOBLIN_SCOUT',
     choices: [
-      { text: "Defend yourself!", nextId: 'POST_FIGHT_1' }
+      { text: "Defend yourself!", nextId: 'POST_FIGHT_1' },
+      { text: "Scan the darkness (Darkvision)", nextId: 'ELF_AMBUSH', reqAbility: 'Darkvision' }
+    ]
+  },
+  ELF_AMBUSH: {
+    id: 'ELF_AMBUSH',
+    text: "Your elven eyes pierce the gloom. You spot the heat signature of a goblin clinging to the stalactites above, ready to drop.\n\nBefore it can leap, you loose a projectile. It strikes true. The goblin falls to the floor with a thud, dead before it hit the ground.",
+    choices: [
+      { text: "Loot the body.", nextId: 'POST_FIGHT_1' }
     ]
   },
   POST_FIGHT_1: {
     id: 'POST_FIGHT_1',
-    text: "The goblin creates a gurgling sound as it expires. You kick the body aside. On its neck, you find a 'Bone Totem'.\n\nThis must be how the goblins bypass the traps further in.",
+    text: "The tunnel is quiet again. You check the goblin's body. On its neck, you find a 'Bone Totem'.\n\nThis must be how the goblins bypass the traps further in.",
     choices: [
       { text: "Take the totem and crawl out of the tunnel.", nextId: 'REST_SITE', action: 'ADD_ITEM', actionValue: 'AMULET' }
     ]

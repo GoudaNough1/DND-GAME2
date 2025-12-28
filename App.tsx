@@ -2,22 +2,29 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { GameLog } from './components/GameLog';
 import { ActionPanel } from './components/ActionPanel';
+import { CharacterCreation } from './components/CharacterCreation';
 import { Player, LogEntry, StoryNode, Enemy, Choice, ClassName } from './types';
-import { STORY_NODES, CLASS_PRESETS, ENEMIES, ITEMS, SKILLS } from './constants';
+import { STORY_NODES, ENEMIES, ITEMS, SKILLS } from './constants';
 
 const INITIAL_PLAYER: Player = {
   name: 'Adventurer',
+  race: 'Human',
+  background: 'Urchin',
+  personality: 'Stoic',
   className: 'Novice',
+  visuals: { skinColor: '#fca5a5', hairColor: '#334155', hairStyle: 1, accessory: 0 },
   stats: { str: 10, dex: 10, int: 10, maxHp: 10, currentHp: 10, ac: 10 },
   xp: 0,
   inventory: [],
   level: 1,
   skills: [],
   cooldowns: {},
-  isDefending: false
+  isDefending: false,
+  passiveAbilities: []
 };
 
 export default function App() {
+  const [gameState, setGameState] = useState<'CREATION' | 'PLAYING'>('CREATION');
   const [player, setPlayer] = useState<Player>(INITIAL_PLAYER);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [currentNodeId, setCurrentNodeId] = useState<string>('START');
@@ -32,29 +39,19 @@ export default function App() {
   // --- Engine: Dice Roll ---
   const rollD20 = () => Math.floor(Math.random() * 20) + 1;
 
-  // --- Effect: Initialize Story ---
-  useEffect(() => {
-    if (logs.length === 0) {
-      addLog(STORY_NODES['START'].text);
-    }
-  }, [addLog, logs.length]);
+  // --- Start Game after Creation ---
+  const handleCreationComplete = (newPlayer: Player) => {
+    setPlayer(newPlayer);
+    setGameState('PLAYING');
+    addLog(STORY_NODES['START'].text);
+  };
 
   // --- Logic: Handle Choices ---
   const handleChoice = (choice: Choice) => {
     // Handle Special Actions defined in choices
     if (choice.action === 'ADD_ITEM' && choice.actionValue) {
-      if (['Warrior', 'Rogue', 'Mage'].includes(choice.actionValue as string)) {
-        const cls = choice.actionValue as string;
-        const preset = CLASS_PRESETS[cls];
-        setPlayer(prev => ({
-          ...prev,
-          className: cls as ClassName,
-          stats: { ...preset.stats },
-          inventory: [...preset.items],
-          skills: [...preset.skills]
-        }));
-        addLog(`You grip your weapon. You are ready. (Class: ${cls})`, 'SUCCESS');
-      } else if (choice.actionValue === 'AMULET') {
+       // Class selection removed from here as it is now in Creation
+       if (choice.actionValue === 'AMULET') {
         const item = ITEMS['AMULET'];
         setPlayer(prev => ({ ...prev, inventory: [...prev.inventory, item] }));
         addLog(`You picked up: ${item.name}`, 'LOOT');
@@ -82,6 +79,9 @@ export default function App() {
     // Check for Stat Roll Visuals in Choices (Flavor only)
     if (choice.reqStat) {
        addLog(`🎲 [Skill Check: ${choice.reqStat.toUpperCase()}] Passed.`, 'SUCCESS');
+    }
+    if (choice.reqAbility) {
+       addLog(`✨ [Racial Ability: ${choice.reqAbility}] Used.`, 'SUCCESS');
     }
 
     if (nextNode.enemyId && choice.action !== 'INIT_COMBAT' && choice.nextId !== 'BOSS_FIGHT') {
@@ -167,13 +167,18 @@ export default function App() {
             const baseVal = weapon ? weapon.effectValue || 4 : 2; 
             dmg = Math.floor(Math.random() * baseVal) + 1 + hitMod;
             
+            // RACIAL ABILITY: ORC SAVAGE ATTACKS
+            if (player.passiveAbilities.includes('Savage Attacks')) {
+                 dmg += 2;
+            }
+
             if (isCrit) {
                 dmg *= 2;
                 addLog(rollLog + " ...CRITICAL HIT!", 'SUCCESS');
                 hitDescription = `CRITICAL! Your strike finds a weak point for DOUBLE DAMAGE (${dmg})!`;
             } else {
                 addLog(rollLog + " ...HIT!", 'SUCCESS');
-                hitDescription = `You strike the ${enemy.name} for ${dmg} damage.`;
+                hitDescription = `You strike the ${enemy.name} for ${dmg} damage.${player.passiveAbilities.includes('Savage Attacks') ? ' (Savage +2)' : ''}`;
             }
         } else {
             addLog(rollLog + " ...MISS", 'COMBAT_INFO');
@@ -273,8 +278,6 @@ export default function App() {
 
   const endCombat = (victory: boolean, enemy: Enemy) => {
     setCombatState({ active: false, enemy: null });
-    // Clear cooldowns on combat end? Optional. Let's keep them for realism or reset.
-    // Resetting for vertical slice fun.
     setPlayer(p => ({ ...p, cooldowns: {} }));
 
     if (victory) {
@@ -299,6 +302,7 @@ export default function App() {
   };
 
   const restartGame = () => {
+    setGameState('CREATION');
     setPlayer(INITIAL_PLAYER);
     setLogs([]);
     setCurrentNodeId('START');
@@ -306,6 +310,10 @@ export default function App() {
   };
 
   const currentNode = STORY_NODES[currentNodeId];
+
+  if (gameState === 'CREATION') {
+      return <CharacterCreation onComplete={handleCreationComplete} />;
+  }
 
   return (
     <div className="flex flex-col md:flex-row h-screen max-h-screen w-full bg-slate-950 overflow-hidden">

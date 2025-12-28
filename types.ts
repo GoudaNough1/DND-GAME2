@@ -9,6 +9,16 @@ export interface Stats {
 }
 
 export type ClassName = 'Warrior' | 'Rogue' | 'Mage' | 'Novice';
+export type Race = 'Human' | 'Elf' | 'Dwarf' | 'Orc';
+export type Background = 'Urchin' | 'Noble' | 'Soldier' | 'Scholar';
+export type Personality = 'Stoic' | 'Aggressive' | 'Charming' | 'Paranoid';
+
+export interface VisualTraits {
+  skinColor: string;
+  hairColor: string;
+  hairStyle: number; // 0-3
+  accessory: number; // 0-3 (Beard, Glasses, Scar, None)
+}
 
 export interface Item {
   id: string;
@@ -29,7 +39,11 @@ export interface Skill {
 
 export interface Player {
   name: string;
+  race: Race;
+  background: Background;
+  personality: Personality;
   className: ClassName;
+  visuals: VisualTraits;
   stats: Stats;
   xp: number;
   inventory: Item[];
@@ -37,6 +51,7 @@ export interface Player {
   skills: Skill[];
   cooldowns: Record<string, number>; // skillId -> turns remaining
   isDefending: boolean;
+  passiveAbilities: string[]; // Racial Traits
 }
 
 export interface Enemy {
@@ -65,6 +80,7 @@ export interface Choice {
   nextId: string;
   reqStat?: 'str' | 'dex' | 'int';
   reqValue?: number;
+  reqAbility?: string; // New Requirement
   reqItem?: string; // Item ID required
   action?: 'INIT_COMBAT' | 'HEAL' | 'ADD_ITEM';
   actionValue?: string | number; // Enemy ID or Amount

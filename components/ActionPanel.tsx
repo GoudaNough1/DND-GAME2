@@ -30,6 +30,9 @@ export const ActionPanel: React.FC<ActionPanelProps> = ({
     if (choice.reqItem) {
         return player.inventory.some(i => i.id === choice.reqItem);
     }
+    if (choice.reqAbility) {
+        return player.passiveAbilities.includes(choice.reqAbility);
+    }
     return true;
   };
 
@@ -145,12 +148,17 @@ export const ActionPanel: React.FC<ActionPanelProps> = ({
                         </span>
                         {!available && (
                             <span className="text-[10px] uppercase font-bold text-red-400 bg-red-950/50 px-2 py-1 rounded border border-red-900 ml-2 whitespace-nowrap">
-                                Need {choice.reqStat ? `${choice.reqStat} ${choice.reqValue}` : 'Item'}
+                                Need {choice.reqStat ? `${choice.reqStat} ${choice.reqValue}` : choice.reqAbility ? choice.reqAbility : 'Item'}
                             </span>
                         )}
                         {available && choice.reqStat && (
                              <span className="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-950/50 px-2 py-1 rounded border border-emerald-900 ml-2 whitespace-nowrap">
                                 [{choice.reqStat} Check]
+                            </span>
+                        )}
+                        {available && choice.reqAbility && (
+                             <span className="text-[10px] uppercase font-bold text-cyan-400 bg-cyan-950/50 px-2 py-1 rounded border border-cyan-900 ml-2 whitespace-nowrap">
+                                [{choice.reqAbility}]
                             </span>
                         )}
                     </button>
